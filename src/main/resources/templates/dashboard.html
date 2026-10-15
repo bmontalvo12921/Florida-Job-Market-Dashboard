@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Florida Data Analyst Job Market Monitor</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        /* ================================
+           HEADER
+           ================================ */
+
+        .header {
+            background: #172554;
+            color: white;
+            padding: 28px 30px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.85;
+        }
+
+        /* ================================
+           MAIN CONTAINER
+           ================================ */
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+
+        /* ================================
+           SUMMARY CARDS
+           ================================ */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        /* ================================
+           FILTERS
+           ================================ */
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filters h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 12px;
+        }
+
+        input,
+        select,
+        button {
+            padding: 11px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            background: white;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .reset-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .reset-button:hover {
+            background: #1d4ed8;
+        }
+
+        /* ================================
+           CHARTS
+           ================================ */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-card h2 {
+            margin: 0 0 15px 0;
+            font-size: 19px;
+        }
+
+        .chart-container {
+            height: 320px;
+            position: relative;
+        }
+
+        /* ================================
+           JOB LISTINGS
+           ================================ */
+
+        .jobs-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .jobs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .jobs-header h2 {
+            margin: 0;
+        }
+
+        #resultCount {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f3f4f6;
+            text-align: left;
+            padding: 12px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr.job-row:hover {
+            background: #f9fafb;
+        }
+
+        .job-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .job-link:hover {
+            text-decoration: underline;
+        }
+
+        .salary {
+            white-space: nowrap;
+        }
+
+        .details-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .details-button:hover {
+            background: #1d4ed8;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            display: none;
+        }
+
+        /* ================================
+           JOB DETAILS MODAL
+           ================================ */
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 900px;
+            margin: auto;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 18px;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 2px 8px;
+        }
+
+        .modal-close:hover {
+            color: #111827;
+        }
+
+        .modal-title {
+            margin: 0 40px 8px 0;
+            font-size: 26px;
+            color: #172554;
+        }
+
+        .modal-company {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .modal-location {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .job-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .meta-box {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .meta-label {
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            font-weight: bold;
+        }
+
+        .description-title {
+            font-size: 20px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            line-height: 1.7;
+            white-space: pre-line;
+            color: #374151;
+            max-height: 450px;
+            overflow-y: auto;
+            padding: 18px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .original-job-button {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            padding: 11px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .original-job-button:hover {
+            background: #1d4ed8;
+        }
+
+        .modal-close-button {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 6px;
+        }
+
+        .modal-close-button:hover {
+            background: #4b5563;
+        }
+
+        /* ================================
+           RESPONSIVE
+           ================================ */
+
+        @media (max-width: 1100px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .container {
+                padding: 15px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .job-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .modal {
+                padding: 15px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="header">
+
+    <h1>
+        Florida Data Analyst Job Market Monitor
+    </h1>
+
+    <p>
+        Interactive dashboard powered by Adzuna job data and MySQL
+    </p>
+
+</header>
+
+<div class="container">
+
+    <!-- SUMMARY CARDS -->
+
+    <section class="cards">
+
+        <div class="card">
+
+            <div class="card-title">
+                Total Jobs
+            </div>
+
+            <div
+                    class="card-value"
+                    id="totalJobs"
+                    th:text="${totalJobs}">
+                0
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-title">
+                Average Minimum Salary
+            </div>
+
+            <div
+                    class="card-value"
+                    id="averageSalary"
+                    th:text="${'$' + #numbers.formatDecimal(averageSalary, 0, 0)}">
+                $0
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-title">
+                Jobs With Salary
+            </div>
+
+            <div
+                    class="card-value"
+                    id="salaryJobs"
+                    th:text="${jobsWithSalary}">
+                0
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-title">
+                Top Location
+            </div>
+
+            <div
+                    class="card-value"
+                    id="topLocation"
+                    th:text="${topLocation}">
+                N/A
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- FILTERS -->
+
+    <section class="filters">
+
+        <h2>
+            Job Filters
+        </h2>
+
+        <div class="filter-grid">
+
+            <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search title, company, or location...">
+
+            <select id="locationFilter">
+
+                <option value="">
+                    All Locations
+                </option>
+
+            </select>
+
+            <select id="companyFilter">
+
+                <option value="">
+                    All Companies
+                </option>
+
+            </select>
+
+            <select id="contractFilter">
+
+                <option value="">
+                    All Contract Types
+                </option>
+
+            </select>
+
+            <button
+                    type="button"
+                    class="reset-button"
+                    id="resetButton">
+
+                Reset
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- CHARTS -->
+
+    <section class="charts">
+
+        <div class="chart-card">
+
+            <h2>
+                Jobs by Location
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="locationChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-card">
+
+            <h2>
+                Salary Distribution
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="salaryChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-card">
+
+            <h2>
+                Top Companies
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="companyChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-card">
+
+            <h2>
+                Contract Types
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="contractChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- JOB LISTINGS -->
+
+    <section class="jobs-section">
+
+        <div class="jobs-header">
+
+            <h2>
+                Job Listings
+            </h2>
+
+            <span id="resultCount">
+                0 jobs
+            </span>
+
+        </div>
+
+        <div class="table-container">
+
+            <table id="jobsTable">
+
+                <thead>
+
+                <tr>
+
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Salary</th>
+                    <th>Contract</th>
+                    <th>Posted</th>
+                    <th>Details</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <!-- FIXED: no HTML comments inside the opening TR tag -->
+
+                <tr
+                        th:each="job : ${jobs}"
+                        class="job-row"
+                        th:data-title="${job.title}"
+                        th:data-company="${job.company}"
+                        th:data-location="${job.normalizedLocation}"
+                        th:data-contract="${job.contractType}"
+                        th:data-salary-min="${job.salaryMin}"
+                        th:data-salary-max="${job.salaryMax}">
+
+                    <td>
+
+                        <span th:text="${job.title}">
+                            Job Title
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span th:text="${job.company}">
+                            Company
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span th:text="${job.normalizedLocation}">
+                            Location
+                        </span>
+
+                    </td>
+
+                    <td class="salary">
+
+                        <span
+                                th:if="${job.salaryMin != null and job.salaryMax != null}"
+                                th:text="${'$'
+                                    + #numbers.formatDecimal(job.salaryMin, 0, 0)
+                                    + ' - $'
+                                    + #numbers.formatDecimal(job.salaryMax, 0, 0)}">
+                        </span>
+
+                        <span
+                                th:if="${job.salaryMin != null and job.salaryMax == null}"
+                                th:text="${'$'
+                                    + #numbers.formatDecimal(job.salaryMin, 0, 0)
+                                    + '+'}">
+                        </span>
+
+                        <span
+                                th:if="${job.salaryMin == null and job.salaryMax != null}"
+                                th:text="${'Up to $'
+                                    + #numbers.formatDecimal(job.salaryMax, 0, 0)}">
+                        </span>
+
+                        <span
+                                th:if="${job.salaryMin == null and job.salaryMax == null}">
+                            Not listed
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span th:text="${job.contractType}">
+                            -
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span th:text="${job.created}">
+                            -
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <button
+                                type="button"
+                                class="details-button"
+                                th:data-title="${job.title}"
+                                th:data-company="${job.company}"
+                                th:data-location="${job.normalizedLocation}"
+                                th:data-contract="${job.contractType}"
+                                th:data-time="${job.contractTime}"
+                                th:data-salary-min="${job.salaryMin}"
+                                th:data-salary-max="${job.salaryMax}"
+                                th:data-created="${job.created}"
+                                th:data-description="${job.description}"
+                                th:data-url="${job.jobUrl}">
+
+                            View Details
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div
+                    id="noResults"
+                    class="no-results">
+
+                No jobs match your filters.
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+<!-- JOB DETAILS MODAL -->
+
+<div
+        id="jobModal"
+        class="modal">
+
+    <div class="modal-content">
+
+        <button
+                type="button"
+                class="modal-close"
+                id="modalX">
+
+            &times;
+
+        </button>
+
+        <h2
+                class="modal-title"
+                id="modalTitle">
+
+            Job Title
+
+        </h2>
+
+        <div
+                class="modal-company"
+                id="modalCompany">
+
+            Company
+
+        </div>
+
+        <div
+                class="modal-location"
+                id="modalLocation">
+
+            Location
+
+        </div>
+
+        <div class="job-meta">
+
+            <div class="meta-box">
+
+                <div class="meta-label">
+                    Salary
+                </div>
+
+                <div
+                        class="meta-value"
+                        id="modalSalary">
+
+                    Not listed
+
+                </div>
+
+            </div>
+
+            <div class="meta-box">
+
+                <div class="meta-label">
+                    Contract
+                </div>
+
+                <div
+                        class="meta-value"
+                        id="modalContract">
+
+                    Not listed
+
+                </div>
+
+            </div>
+
+            <div class="meta-box">
+
+                <div class="meta-label">
+                    Work Schedule
+                </div>
+
+                <div
+                        class="meta-value"
+                        id="modalTime">
+
+                    Not listed
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <h3 class="description-title">
+            Job Description
+        </h3>
+
+        <div
+                class="description"
+                id="modalDescription">
+
+            Job description will appear here.
+
+        </div>
+
+        <div class="modal-actions">
+
+            <a
+                    id="modalJobLink"
+                    class="original-job-button"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer">
+
+                Open Original Job Posting
+
+            </a>
+
+            <button
+                    type="button"
+                    class="modal-close-button"
+                    id="modalCloseButton">
+
+                Close
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    /* ================================
+       DOM ELEMENTS
+       ================================ */
+
+    const rows =
+        Array.from(
+            document.querySelectorAll(".job-row")
+        );
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const locationFilter =
+        document.getElementById("locationFilter");
+
+    const companyFilter =
+        document.getElementById("companyFilter");
+
+    const contractFilter =
+        document.getElementById("contractFilter");
+
+    const resetButton =
+        document.getElementById("resetButton");
+
+    const resultCount =
+        document.getElementById("resultCount");
+
+    const noResults =
+        document.getElementById("noResults");
+
+    const jobModal =
+        document.getElementById("jobModal");
+
+    const modalX =
+        document.getElementById("modalX");
+
+    const modalCloseButton =
+        document.getElementById("modalCloseButton");
+
+
+    /* ================================
+       JOB DATA
+       ================================ */
+
+    function getData(row) {
+
+        return {
+
+            element: row,
+
+            title:
+                (row.dataset.title || "").toLowerCase(),
+
+            company:
+                row.dataset.company || "",
+
+            location:
+                row.dataset.location || "",
+
+            contract:
+                row.dataset.contract || "",
+
+            salaryMin:
+                parseFloat(row.dataset.salaryMin) || 0,
+
+            salaryMax:
+                parseFloat(row.dataset.salaryMax) || 0
+
+        };
+
+    }
+
+    const jobData =
+        rows.map(getData);
+
+
+    /* ================================
+       FILTER OPTIONS
+       ================================ */
+
+    function populateFilters() {
+
+        const locations =
+            [...new Set(
+
+                jobData
+                    .map(job => job.location)
+                    .filter(Boolean)
+
+            )].sort();
+
+        const companies =
+            [...new Set(
+
+                jobData
+                    .map(job => job.company)
+                    .filter(Boolean)
+
+            )].sort();
+
+        const contracts =
+            [...new Set(
+
+                jobData
+                    .map(job => job.contract)
+                    .filter(Boolean)
+
+            )].sort();
+
+
+        locations.forEach(location => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                location;
+
+            option.textContent =
+                location;
+
+            locationFilter.appendChild(option);
+
+        });
+
+
+        companies.forEach(company => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                company;
+
+            option.textContent =
+                company;
+
+            companyFilter.appendChild(option);
+
+        });
+
+
+        contracts.forEach(contract => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                contract;
+
+            option.textContent =
+                contract;
+
+            contractFilter.appendChild(option);
+
+        });
+
+    }
+
+
+    /* ================================
+       FILTER JOBS
+       ================================ */
+
+    function getFilteredJobs() {
+
+        const search =
+            searchInput.value
+                .toLowerCase()
+                .trim();
+
+        const location =
+            locationFilter.value;
+
+        const company =
+            companyFilter.value;
+
+        const contract =
+            contractFilter.value;
+
+        return jobData.filter(job => {
+
+            const searchMatch =
+
+                !search ||
+
+                job.title.includes(search) ||
+
+                job.company
+                    .toLowerCase()
+                    .includes(search) ||
+
+                job.location
+                    .toLowerCase()
+                    .includes(search);
+
+            const locationMatch =
+                !location ||
+                job.location === location;
+
+            const companyMatch =
+                !company ||
+                job.company === company;
+
+            const contractMatch =
+                !contract ||
+                job.contract === contract;
+
+            return (
+                searchMatch &&
+                locationMatch &&
+                companyMatch &&
+                contractMatch
+            );
+
+        });
+
+    }
+
+
+    /* ================================
+       CHART VARIABLES
+       ================================ */
+
+    let locationChart = null;
+    let salaryChart = null;
+    let companyChart = null;
+    let contractChart = null;
+
+
+    /* ================================
+       UPDATE CHART DATA
+       ================================ */
+
+    function updateCharts(filteredJobs) {
+
+        const locations = {};
+        const companies = {};
+        const contracts = {};
+
+        const salaryRanges = {
+
+            "Under $40K": 0,
+            "$40K-$60K": 0,
+            "$60K-$80K": 0,
+            "$80K-$100K": 0,
+            "$100K+": 0
+
+        };
+
+
+        filteredJobs.forEach(job => {
+
+            if (job.location) {
+
+                locations[job.location] =
+                    (locations[job.location] || 0) + 1;
+
+            }
+
+            if (job.company) {
+
+                companies[job.company] =
+                    (companies[job.company] || 0) + 1;
+
+            }
+
+            if (job.contract) {
+
+                contracts[job.contract] =
+                    (contracts[job.contract] || 0) + 1;
+
+            }
+
+            const salary =
+                job.salaryMin > 0
+                    ? job.salaryMin
+                    : job.salaryMax;
+
+            if (salary > 0) {
+
+                if (salary < 40000) {
+
+                    salaryRanges["Under $40K"]++;
+
+                }
+
+                else if (salary < 60000) {
+
+                    salaryRanges["$40K-$60K"]++;
+
+                }
+
+                else if (salary < 80000) {
+
+                    salaryRanges["$60K-$80K"]++;
+
+                }
+
+                else if (salary < 100000) {
+
+                    salaryRanges["$80K-$100K"]++;
+
+                }
+
+                else {
+
+                    salaryRanges["$100K+"]++;
+
+                }
+
+            }
+
+        });
+
+
+        const topLocations =
+            Object.entries(locations)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+        const topCompanies =
+            Object.entries(companies)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+
+        updateLocationChart(topLocations);
+        updateCompanyChart(topCompanies);
+        updateContractChart(contracts);
+        updateSalaryChart(salaryRanges);
+
+    }
+
+
+    /* ================================
+       LOCATION CHART
+       ================================ */
+
+    function updateLocationChart(data) {
+
+        if (locationChart) {
+            locationChart.destroy();
+        }
+
+        locationChart =
+            new Chart(
+                document.getElementById("locationChart"),
+                {
+                    type: "bar",
+
+                    data: {
+
+                        labels:
+                            data.map(item => item[0]),
+
+                        datasets: [{
+
+                            label: "Jobs",
+
+                            data:
+                                data.map(item => item[1])
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ================================
+       COMPANY CHART
+       ================================ */
+
+    function updateCompanyChart(data) {
+
+        if (companyChart) {
+            companyChart.destroy();
+        }
+
+        companyChart =
+            new Chart(
+                document.getElementById("companyChart"),
+                {
+
+                    type: "bar",
+
+                    data: {
+
+                        labels:
+                            data.map(item => item[0]),
+
+                        datasets: [{
+
+                            label: "Jobs",
+
+                            data:
+                                data.map(item => item[1])
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        indexAxis: "y",
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ================================
+       CONTRACT CHART
+       ================================ */
+
+    function updateContractChart(data) {
+
+        if (contractChart) {
+            contractChart.destroy();
+        }
+
+        contractChart =
+            new Chart(
+                document.getElementById("contractChart"),
+                {
+
+                    type: "doughnut",
+
+                    data: {
+
+                        labels:
+                            Object.keys(data),
+
+                        datasets: [{
+
+                            data:
+                                Object.values(data)
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ================================
+       SALARY CHART
+       ================================ */
+
+    function updateSalaryChart(data) {
+
+        if (salaryChart) {
+            salaryChart.destroy();
+        }
+
+        salaryChart =
+            new Chart(
+                document.getElementById("salaryChart"),
+                {
+
+                    type: "bar",
+
+                    data: {
+
+                        labels:
+                            Object.keys(data),
+
+                        datasets: [{
+
+                            label: "Jobs",
+
+                            data:
+                                Object.values(data)
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ================================
+       UPDATE DASHBOARD
+       ================================ */
+
+    function updateDashboard() {
+
+        const filteredJobs =
+            getFilteredJobs();
+
+
+        rows.forEach((row, index) => {
+
+            const job =
+                jobData[index];
+
+            const visible =
+                filteredJobs.includes(job);
+
+            row.style.display =
+                visible ? "" : "none";
+
+        });
+
+
+        resultCount.textContent =
+            filteredJobs.length + " jobs";
+
+
+        noResults.style.display =
+            filteredJobs.length === 0
+                ? "block"
+                : "none";
+
+
+        document.getElementById("totalJobs")
+            .textContent =
+            filteredJobs.length;
+
+
+        const salaryJobs =
+            filteredJobs.filter(job =>
+                job.salaryMin > 0 ||
+                job.salaryMax > 0
+            );
+
+
+        document.getElementById("salaryJobs")
+            .textContent =
+            salaryJobs.length;
+
+
+        const salaryValues =
+            filteredJobs
+
+                .filter(job =>
+                    job.salaryMin > 0
+                )
+
+                .map(job =>
+                    job.salaryMin
+                );
+
+
+        const average =
+            salaryValues.length > 0
+
+                ? salaryValues.reduce(
+                (a, b) => a + b,
+                0
+            ) / salaryValues.length
+
+                : 0;
+
+
+        document.getElementById("averageSalary")
+            .textContent =
+
+            average > 0
+
+                ? "$" +
+                Math.round(average)
+                    .toLocaleString()
+
+                : "$0";
+
+
+        const locationCounts = {};
+
+        filteredJobs.forEach(job => {
+
+            if (job.location) {
+
+                locationCounts[job.location] =
+                    (locationCounts[job.location] || 0) + 1;
+
+            }
+
+        });
+
+
+        const topLocation =
+
+            Object.entries(locationCounts)
+
+                .sort((a, b) => b[1] - a[1])[0];
+
+
+        document.getElementById("topLocation")
+            .textContent =
+
+            topLocation
+                ? topLocation[0]
+                : "N/A";
+
+
+        updateCharts(filteredJobs);
+
+    }
+
+
+    /* ================================
+       JOB DETAILS MODAL
+       ================================ */
+
+    function openJobDetails(button) {
+
+        const title =
+            button.dataset.title || "Job";
+
+        const company =
+            button.dataset.company || "Not listed";
+
+        const location =
+            button.dataset.location || "Unknown";
+
+        const contract =
+            button.dataset.contract || "Not listed";
+
+        const time =
+            button.dataset.time || "Not listed";
+
+        const description =
+            button.dataset.description ||
+            "No job description was provided.";
+
+        const url =
+            button.dataset.url || "#";
+
+        const salaryMin =
+            parseFloat(button.dataset.salaryMin);
+
+        const salaryMax =
+            parseFloat(button.dataset.salaryMax);
+
+
+        let salaryText =
+            "Not listed";
+
+
+        if (!isNaN(salaryMin) &&
+            !isNaN(salaryMax)) {
+
+            salaryText =
+                "$" +
+                Math.round(salaryMin)
+                    .toLocaleString() +
+                " - $" +
+                Math.round(salaryMax)
+                    .toLocaleString();
+
+        }
+
+        else if (!isNaN(salaryMin)) {
+
+            salaryText =
+                "$" +
+                Math.round(salaryMin)
+                    .toLocaleString() +
+                "+";
+
+        }
+
+        else if (!isNaN(salaryMax)) {
+
+            salaryText =
+                "Up to $" +
+                Math.round(salaryMax)
+                    .toLocaleString();
+
+        }
+
+
+        document.getElementById("modalTitle")
+            .textContent =
+            title;
+
+        document.getElementById("modalCompany")
+            .textContent =
+            company;
+
+        document.getElementById("modalLocation")
+            .textContent =
+            location;
+
+        document.getElementById("modalSalary")
+            .textContent =
+            salaryText;
+
+        document.getElementById("modalContract")
+            .textContent =
+            contract;
+
+        document.getElementById("modalTime")
+            .textContent =
+            time;
+
+        document.getElementById("modalDescription")
+            .textContent =
+            description;
+
+
+        const jobLink =
+            document.getElementById("modalJobLink");
+
+
+        jobLink.href =
+            url;
+
+
+        if (url === "#") {
+
+            jobLink.style.display =
+                "none";
+
+        }
+
+        else {
+
+            jobLink.style.display =
+                "inline-block";
+
+        }
+
+
+        jobModal.style.display =
+            "block";
+
+        document.body.style.overflow =
+            "hidden";
+
+    }
+
+
+    /* ================================
+       CLOSE MODAL
+       ================================ */
+
+    function closeJobDetails() {
+
+        jobModal.style.display =
+            "none";
+
+        document.body.style.overflow =
+            "";
+
+    }
+
+
+    /* ================================
+       DETAILS BUTTONS
+       ================================ */
+
+    document.querySelectorAll(".details-button")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    openJobDetails(this);
+
+                }
+            );
+
+        });
+
+
+    /* ================================
+       MODAL CLOSE BUTTONS
+       ================================ */
+
+    modalX.addEventListener(
+        "click",
+        closeJobDetails
+    );
+
+    modalCloseButton.addEventListener(
+        "click",
+        closeJobDetails
+    );
+
+
+    /* ================================
+       CLICK OUTSIDE MODAL
+       ================================ */
+
+    jobModal.addEventListener(
+        "click",
+        function(event) {
+
+            if (event.target === jobModal) {
+
+                closeJobDetails();
+
+            }
+
+        }
+    );
+
+
+    /* ================================
+       ESCAPE KEY
+       ================================ */
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Escape") {
+
+                closeJobDetails();
+
+            }
+
+        }
+    );
+
+
+    /* ================================
+       FILTER EVENTS
+       ================================ */
+
+    searchInput.addEventListener(
+        "input",
+        updateDashboard
+    );
+
+    locationFilter.addEventListener(
+        "change",
+        updateDashboard
+    );
+
+    companyFilter.addEventListener(
+        "change",
+        updateDashboard
+    );
+
+    contractFilter.addEventListener(
+        "change",
+        updateDashboard
+    );
+
+
+    /* ================================
+       RESET FILTERS
+       ================================ */
+
+    resetButton.addEventListener(
+        "click",
+        function() {
+
+            searchInput.value = "";
+
+            locationFilter.value = "";
+
+            companyFilter.value = "";
+
+            contractFilter.value = "";
+
+            updateDashboard();
+
+        }
+    );
+
+
+    /* ================================
+       INITIALIZE
+       ================================ */
+
+    populateFilters();
+
+    updateDashboard();
+
+</script>
+
+</body>
+
+</html>
