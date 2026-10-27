@@ -189,13 +189,6 @@ public class Job {
 
     /**
      * Creates a dashboard-friendly version of the location.
-     *
-     * Examples:
-     * "Orlando, Orange County" -> "Orlando"
-     * "Tallahassee, Leon County" -> "Tallahassee"
-     * "Fort Lauderdale, Broward County" -> "Fort Lauderdale"
-     * "Florida" -> "Statewide"
-     * "Florida, US" -> "Statewide"
      */
     public String getNormalizedLocation() {
 
